@@ -109,19 +109,25 @@ public function casosPorAnio()
 
 
 
-public function casosPorDepartamento(Request $request)
-{
-    $departamento_id = $request->query('departamento_id');
-    $query = DB::table('departamentos')
-        ->leftJoin('casos', 'departamentos.id', '=', 'casos.departamento_id')
-        ->select('departamentos.nombre AS departamento', DB::raw('COUNT(casos.id) AS cantidad_casos'))
-        ->groupBy('departamentos.nombre');
-    if ($departamento_id) {
-        $query->where('departamentos.id', $departamento_id);
+    public function casosPorDepartamento(Request $request)
+    {
+        $departamentos_id = $request->query('departamentos_id');
+
+        $departamentos_id = json_decode($departamentos_id, true);
+
+        $query = DB::table('departamentos')
+            ->leftJoin('casos', 'departamentos.id', '=', 'casos.departamento_id')
+            ->select('departamentos.nombre AS departamento', DB::raw('COUNT(casos.id) AS cantidad_casos'))
+            ->groupBy('departamentos.nombre');
+
+        if (is_array($departamentos_id) && !empty($departamentos_id)) {
+            $query->whereIn('departamentos.id', $departamentos_id);
+        }
+
+        $casosPorDepartamento = $query->get();
+
+        return response()->json($casosPorDepartamento);
     }
-    $casosPorDepartamento = $query->get();
-    return response()->json($casosPorDepartamento);
-}
 public function casosPorMunicipio(Request $request)
 {
     $municipios = DB::table('municipios')
@@ -224,27 +230,27 @@ public function casosPorDepartamentoYMunicipio(Request $request)
             ->leftJoin('casos as c', 'r.caso_id', '=', 'c.id')
             ->leftJoin('municipios as m', 'c.municipio_id', '=', 'm.id')
             ->leftJoin('departamentos as d', 'm.departamento_id', '=', 'd.id')
-            ->select('d.nombre as departamento', 
-                     'tr2.descripcion as tipo_resolucion2', 
-                     'tr.descripcion as sub_tipo_resolucion', 
+            ->select('d.nombre as departamento',
+                     'tr2.descripcion as tipo_resolucion2',
+                     'tr.descripcion as sub_tipo_resolucion',
                      DB::raw('COUNT(r.numres2) as cantidad_resoluciones'));
-    
+
         // Filtrado por departamento
         if ($request->has('departamento_id')) {
             $query->where('d.id', $request->departamento_id);
         }
-    
+
         // Filtrado por tipo_resolucion2
         if ($request->has('res_tipo2')) {
             $query->where('tr2.descripcion', $request->res_tipo2);
         }
-    
+
         $resoluciones = $query->groupBy('d.nombre', 'tr2.descripcion', 'tr.descripcion')
             ->orderBy('d.nombre', 'asc')
             ->orderBy('tr2.descripcion', 'asc')
             ->orderBy('tr.descripcion', 'asc')
             ->get();
-    
+
         return response()->json($resoluciones);
     }
 
@@ -254,33 +260,33 @@ public function casosPorDepartamentoYMunicipio(Request $request)
             ->leftJoin('casos as c', 'r.caso_id', '=', 'c.id')
             ->leftJoin('municipios as m', 'c.municipio_id', '=', 'm.id')
             ->leftJoin('departamentos as d', 'm.departamento_id', '=', 'd.id')
-            ->select('d.nombre as departamento', 
-                     'tr2.descripcion as tipo_resolucion2', 
+            ->select('d.nombre as departamento',
+                     'tr2.descripcion as tipo_resolucion2',
                      DB::raw('COUNT(r.numres2) as cantidad_resoluciones'));
-    
+
         // Filtrado por departamento
         if ($request->has('departamento_id')) {
             $query->where('d.id', $request->departamento_id);
         }
-    
+
         // Filtrado por tipo_resolucion2
         if ($request->has('res_tipo2')) {
             $query->where('tr2.descripcion', $request->res_tipo2);
         }
-    
+
         $resoluciones = $query->groupBy('d.nombre', 'tr2.descripcion')
             ->orderBy('d.nombre', 'asc')
             ->orderBy('tr2.descripcion', 'asc')
             ->get();
-    
+
         return response()->json($resoluciones);
     }
-    
 
-    
 
-    
-    //PARA OBTENER EL TOTAL DE CASOS 
+
+
+
+    //PARA OBTENER EL TOTAL DE CASOS
 
     public function contarCasosYResoluciones()
     {
@@ -298,7 +304,7 @@ public function casosPorDepartamentoYMunicipio(Request $request)
         ]);
     }
     public function contarCasosResEmisor(Request $request){
-        
+
         $resEmisor_id = $request->query('res_emisor_id');
         $query = DB::table('res_emisores')
             ->leftJoin('casos', 'res_emisores.id', '=', 'casos.res_emisor_id')
@@ -310,7 +316,7 @@ public function casosPorDepartamentoYMunicipio(Request $request)
         $casosPorResEmisor = $query->get();
         return response()->json($casosPorResEmisor);
     }
-    
+
 
     // Obtiene casos agrupados por año y mes de fecha de ingreso
 
