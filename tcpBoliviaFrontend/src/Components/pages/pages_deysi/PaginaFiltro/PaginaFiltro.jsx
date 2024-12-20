@@ -97,6 +97,7 @@ const PaginaFiltro = () => {
     };
     const handleDepartamentoChange = async (e) => {
         const selectedOptions = await Array.from(e.target.selectedOptions, option => option.value);
+        console.log(selectedOptions);
         setSelectedDepartments(selectedOptions);
 
         // const departmentId = e.target.value;
